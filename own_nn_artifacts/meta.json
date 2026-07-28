@@ -1,0 +1,1 @@
+{"vocab_size": 71741, "pad_value": 0, "embedding_dim": 100, "hidden_dim": 200, "num_layers": 1, "max_seq_len": 200}
