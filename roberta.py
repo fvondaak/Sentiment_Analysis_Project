@@ -61,8 +61,10 @@ def _predict_probs(texts, resources, batch_size=BATCH_SIZE, max_length=MAX_LENGT
             probs = torch.softmax(logits, dim=1)
 
             if probs.shape[1] == 3:
-                # 0=Negativ, 1=Neutral, 2=Positiv
-                pos_probs = probs[:, 2].cpu().numpy()
+                # 0=Negativ, 1=Neutral, 2=Positiv. Nur Negativ gegen Positiv
+                # vergleichen, sonst wird die neutral-Masse als negativ gewertet.
+                p_neg, p_pos = probs[:, 0], probs[:, 2]
+                pos_probs = (p_pos / (p_neg + p_pos + 1e-9)).cpu().numpy()
             else:
                 # 0=Negativ, 1=Positiv
                 pos_probs = probs[:, 1].cpu().numpy()
