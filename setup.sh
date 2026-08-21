@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run this to setup virtual environment
-uv venv --python 3.12 .venv
+# Run this to setup virtual environment with pip instead of uv
+python -m venv .venv
 source .venv/bin/activate
-uv pip install -r requirements.txt
+pip install -r requirements.txt

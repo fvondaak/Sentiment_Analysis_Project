@@ -20,7 +20,7 @@ import seaborn as sns
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 import vader
-import roberta
+import roberta.roberta as roberta
 from BiLSTM import evaluation as own_nn
 
 # ==========================================

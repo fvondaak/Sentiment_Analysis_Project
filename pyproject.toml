@@ -12,4 +12,6 @@ dependencies = [
     "scikit-learn",
     "torch",
     "transformers",
+    "matplotlib",
+    "seaborn",
 ]
