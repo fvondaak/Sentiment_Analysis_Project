@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Run this to setup virtual environment
+uv venv --python 3.12 .venv
+source .venv/bin/activate
+uv pip install -r requirements.txt

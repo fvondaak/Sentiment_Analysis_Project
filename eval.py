@@ -21,7 +21,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 
 import vader
 import roberta
-import own_nn
+from BiLSTM import evaluation as own_nn
 
 # ==========================================
 # 1. KONFIGURATION
