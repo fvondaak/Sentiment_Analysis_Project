@@ -20,8 +20,8 @@ PACKAGE_DIR = Path(__file__).resolve().parent
 REPO_DIR = PACKAGE_DIR.parent
 DATA_PATH = REPO_DIR / "imdb_sentiment_dataset.csv"
 MODEL_DIR = PACKAGE_DIR / "trained_models"
-CHECKPOINT_PATH = MODEL_DIR / "best_model.ckpt"
-FINAL_MODEL_PATH = MODEL_DIR / "final_model.pt"
+CHECKPOINT_PATH = MODEL_DIR / "BiLSTM_checkpoint.ckpt"
+FINAL_MODEL_PATH = MODEL_DIR / "BiLSTM_final.pt"
 VOCAB_PATH = MODEL_DIR / "vocab.pkl"
 META_PATH = MODEL_DIR / "meta.json"
 

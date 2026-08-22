@@ -11,7 +11,7 @@ Funktionen:
    ausgewertet werden.
 """
 
-import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -19,20 +19,22 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
-import vader
+import vader.vader as vader
 import roberta.roberta as roberta
-from BiLSTM import evaluation as own_nn
+import BiLSTM.evaluation as own_nn
 
 # ==========================================
 # 1. KONFIGURATION
 # ==========================================
 NUM_EVAL_SAMPLES = 1000
-COMPARISON_PLOT_PATH = "model_comparison.png"
-CONFUSION_PLOT_PATH = "model_confusion_matrices.png"
+REPO_DIR = Path(__file__).resolve().parent
+PLOTS_DIR = REPO_DIR / "plots"
+COMPARISON_PLOT_PATH = PLOTS_DIR / "model_comparison.png"
+CONFUSION_PLOT_PATH = PLOTS_DIR / "model_confusion_matrices.png"
 
 MODELS = {
-    "VADER": {"module": vader, "results_path": vader.RESULTS_PATH},
-    "RoBERTa": {"module": roberta, "results_path": roberta.RESULTS_PATH},
+    "VADER": {"module": vader, "results_path": REPO_DIR / "vader" / "vader_results.csv"},
+    "RoBERTa": {"module": roberta, "results_path": REPO_DIR / "roberta" / "roberta_results.csv"},
     "Own-NN": {"module": own_nn, "results_path": own_nn.RESULTS_PATH},
 }
 
@@ -47,12 +49,15 @@ def load_or_generate_results():
     all_results = {}
     for name, info in MODELS.items():
         path = info["results_path"]
-        if os.path.exists(path):
+        if path.exists():
             print(f"Lade vorhandene Ergebnisse für {name} aus '{path}'...")
             df = pd.read_csv(path)
         else:
             print(f"Keine Ergebnisse für {name} gefunden - führe Auswertung jetzt aus...")
-            df = info["module"].run_evaluation(num_samples=NUM_EVAL_SAMPLES)
+            df = info["module"].run_evaluation(
+                num_samples=NUM_EVAL_SAMPLES,
+                save_path=path,
+            )
         all_results[name] = df
     return all_results
 
@@ -133,6 +138,7 @@ def compare_models(all_results, metrics_list):
 
 
 def plot_comparison(metrics_list):
+    PLOTS_DIR.mkdir(parents=True, exist_ok=True)
     model_names = [m["model"] for m in metrics_list]
     overall = [m["overall_accuracy"] * 100 for m in metrics_list]
     neg = [m["negative_accuracy"] * 100 for m in metrics_list]
