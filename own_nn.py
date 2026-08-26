@@ -361,7 +361,7 @@ def train_and_save():
                                     max_seq_len=MAX_SEQ_LEN, pad_value=pad_value, shuffle=False)
 
     model = BiLSTM(vocab_size, EMBEDDING_DIM, HIDDEN_DIM, NUM_LAYERS, 1, pad_value)
-    model.update_embedding(vectors)
+    model.update_embedding(vectors)  # embedding layer is initialized with GloVe vectors and frozen
     model.to(device)
 
     print("Own-NN: Starte Training...")
