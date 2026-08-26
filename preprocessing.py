@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 
 
 REPO_DIR = Path(__file__).resolve().parent
-DEFAULT_INPUT_PATH = REPO_DIR / "data" / "IMDB Dataset.csv"
+DEFAULT_INPUT_PATH = REPO_DIR / "data" / "imdb_reviews.csv"
 DEFAULT_OUTPUT_PATH = REPO_DIR / "imdb_sentiment_dataset.csv"
 
 LABEL_MAP = {
