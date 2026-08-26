@@ -1,0 +1,10 @@
+gensim
+kaggle
+nltk
+numpy
+pandas
+scikit-learn
+torch
+transformers
+matplotlib
+seaborn
