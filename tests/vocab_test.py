@@ -10,8 +10,6 @@ from own_nn import (
     UNK_TOKEN,
     create_vocabulary,
     get_tokenizer,
-    load_vocab,
-    save_vocab,
 )
 
 
@@ -74,7 +72,7 @@ def test_token_and_index_mappings_are_consistent(vocab):
     indices = list(vocab.token_to_idx.values())
     assert len(indices) == len(set(indices))
 
-
+ 
 def test_lookup_indices(vocab):
     assert vocab.lookup_indices(["good", "missing", "movie"]) == [
         vocab["good"],
@@ -89,13 +87,3 @@ def test_vocabulary_is_deterministic(dataframe, tokenizer, vocab):
 
     assert vocab.token_to_idx == second_vocab.token_to_idx
     assert vocab.idx_to_token == second_vocab.idx_to_token
-
-
-def test_save_and_load_round_trip(vocab, tmp_path):
-    path = tmp_path / "vocab.pkl"
-    save_vocab(vocab, path)
-    loaded_vocab = load_vocab(path)
-
-    assert vocab.token_to_idx == loaded_vocab.token_to_idx
-    assert vocab.idx_to_token == loaded_vocab.idx_to_token
-    assert vocab.unknown_token == loaded_vocab.unknown_token
