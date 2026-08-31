@@ -15,6 +15,7 @@ Auswertung und für die Live-Vorhersage einzelner Texte genutzt werden:
 
 import os
 import re
+import html
 import json
 import pickle
 
@@ -75,9 +76,43 @@ def load_data(data_path=DATA_PATH, val_size=0.1, seed=42):
     return train_df, val_df, test_df
 
 
+# Die IMDb-Reviews wurden von Webseiten gescrapt und enthalten noch echtes
+# Markup (<br />, <i>) sowie HTML-Entities (&amp;, &quot;). `\b\w+\b` schneidet
+# daraus Pseudo-Wörter heraus: "br" war so das siebthäufigste Token im
+# Vokabular. Sie tragen keine Bedeutung, belegen aber Plätze im Eingabefenster
+# (MAX_SEQ_LEN), das ohnehin schon 40% der Reviews abschneidet.
+HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
+
+# Kontraktionen zerfallen an `\b\w+\b` in Bruchstücke: "wasn't" -> ["wasn", "t"].
+# Damit verschwindet die Verneinung, und genau die entscheidet bei Sentiment
+# über das Vorzeichen ("wasn't bad" ist positiv, "bad" negativ). Nach dem
+# Auflösen steht dort "was not bad" - und "not" ist ein Wort, für das GloVe
+# einen gut trainierten Vektor hat.
+#
+# Unregelmäßige Fälle zuerst, weil die allgemeine Regel sie verstümmeln würde
+# ("won't" -> "wo not").
+IRREGULAR_CONTRACTIONS = {
+    "won't": "will not",
+    "can't": "can not",
+    "shan't": "shall not",
+    "ain't": "is not",
+}
+NT_CONTRACTION_PATTERN = re.compile(r"\b(\w+)n't\b")
+
+
 def get_tokenizer():
     def tokenizer(text):
+        text = HTML_TAG_PATTERN.sub(" ", str(text))
+        text = html.unescape(text)
         text = text.lower()
+
+        # Typografischen Apostroph auf ASCII normalisieren, sonst greifen die
+        # Kontraktions-Regeln bei kopierten Texten nicht.
+        text = text.replace("’", "'")
+        for contraction, expansion in IRREGULAR_CONTRACTIONS.items():
+            text = text.replace(contraction, expansion)
+        text = NT_CONTRACTION_PATTERN.sub(r"\1 not", text)
+
         tokens = re.findall(r"\b\w+\b", text)
         return tokens
     return tokenizer
