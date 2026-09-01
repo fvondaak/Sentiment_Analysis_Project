@@ -40,11 +40,11 @@ CKPT_PATH = os.path.join(MODEL_DIR, "best_model.ckpt")
 VOCAB_PATH = os.path.join(MODEL_DIR, "vocab.pkl")
 META_PATH = os.path.join(MODEL_DIR, "meta.json")
 
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 EMBEDDING_DIM = 100
 HIDDEN_DIM = 200
 NUM_LAYERS = 1
-NUM_EPOCHS = 10
+NUM_EPOCHS = 20
 MAX_SEQ_LEN = 200
 
 PAD_TOKEN = "[PAD]"
@@ -222,15 +222,25 @@ def create_dataloader(df, tokenizer, vocab, batch_size, max_seq_len=MAX_SEQ_LEN,
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
 
-def create_embedding_vectors(vocab, embedding_dim):
-    model_name = f"glove-wiki-gigaword-{embedding_dim}"
-    glove_model = gensim_api.load(model_name)
+# def create_embedding_vectors(vocab, embedding_dim):
+#     model_name = f"glove-wiki-gigaword-{embedding_dim}"
+#     glove_model = gensim_api.load(model_name)
 
-    vectors = torch.zeros(len(vocab), embedding_dim)
+#     vectors = torch.zeros(len(vocab), embedding_dim)
+#     for idx, token in enumerate(vocab.get_itos()):
+#         if token in glove_model:
+#             vectors[idx] = torch.tensor(glove_model[token])
+
+#     return vectors
+
+def create_embedding_vectors(vocab, embedding_dim):
+    glove_model = gensim_api.load(f"glove-wiki-gigaword-{embedding_dim}")
+    vectors = torch.randn(len(vocab), embedding_dim) * 0.01  # Random initialization instead of zeros
     for idx, token in enumerate(vocab.get_itos()):
         if token in glove_model:
             vectors[idx] = torch.tensor(glove_model[token])
-
+        if token == PAD_TOKEN:
+            vectors[idx] = torch.zeros(embedding_dim)  # Ensure PAD_TOKEN has a zero vector
     return vectors
 
 
@@ -278,8 +288,9 @@ class BiLSTM(nn.Module):
         self.fc = nn.Linear(self.hidden_dim, self.num_classes)
 
     def update_embedding(self, vectors):
-        self.emb.weight.data.copy_(vectors)
-        self.emb.weight.requires_grad = False
+        with torch.no_grad():
+            self.emb.weight.copy_(vectors)
+        self.emb.weight.requires_grad = True  # Allow fine-tuning of embeddings during training
 
     def dropout(self, v):
         return F.dropout(v, p=0.5, training=self.training)
@@ -308,7 +319,24 @@ class BiLSTM(nn.Module):
 # ==========================================
 def train_model(model, train_loader, val_loader, num_epochs, pad_value=0, save_path=CKPT_PATH):
     criterion = nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam([
+    {
+        "params": model.emb.parameters(),
+        "lr": 0.0001,
+    },
+    {
+        "params": model.lstm.parameters(),
+        "lr": 0.001,
+    },
+    {
+        "params": model.attention.parameters(),
+        "lr": 0.001,
+    },
+    {
+        "params": model.fc.parameters(),
+        "lr": 0.001,
+    },
+])  # smaller learning rate for embedding layer
     total_step = len(train_loader)
     best_val_loss = float("inf")
 
@@ -396,7 +424,7 @@ def train_and_save():
                                     max_seq_len=MAX_SEQ_LEN, pad_value=pad_value, shuffle=False)
 
     model = BiLSTM(vocab_size, EMBEDDING_DIM, HIDDEN_DIM, NUM_LAYERS, 1, pad_value)
-    model.update_embedding(vectors)  # embedding layer is initialized with GloVe vectors and frozen
+    model.update_embedding(vectors)  # embedding layer is initialized with GloVe vectors
     model.to(device)
 
     print("Own-NN: Starte Training...")
@@ -508,6 +536,7 @@ def run_evaluation(resources=None, num_samples=NUM_EVAL_SAMPLES, save_path=RESUL
 
 
 if __name__ == "__main__":
+    print(f"device is {device}")
     if os.path.exists(CKPT_PATH) and os.path.exists(VOCAB_PATH) and os.path.exists(META_PATH):
         print("Own-NN: Bereits trainiertes Modell gefunden - Training wird übersprungen.")
         resources = load_resources()
