@@ -157,15 +157,6 @@ def preprocess(input_path, output_dir, test_size=0.5, seed=42):
     return metadata
 
 
-def parse_args():
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH)
-    parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
-    parser.add_argument("--test-size", type=float, default=0.5)
-    parser.add_argument("--seed", type=int, default=42)
-    return parser.parse_args()
-
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description=__doc__)
     args.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH)
