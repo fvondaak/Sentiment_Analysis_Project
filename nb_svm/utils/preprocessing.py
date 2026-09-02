@@ -126,7 +126,7 @@ def preprocess(input_path, output_dir, test_size=0.5, seed=42):
     tokenizer = get_tokenizer()
     vocabulary = NBSVMVocabulary.from_dataframe(train_df, tokenizer)  # Build vocab from training data only
 
-    X_train = transform_texts(train_df["text"], vocabulary, tokenizer)  # Transform texts into sparse matrices, are not binary yet!!!
+    X_train = transform_texts(train_df["text"], vocabulary, tokenizer)  # Transform texts into sparse matrices
     X_test = transform_texts(test_df["text"], vocabulary, tokenizer)
     y_train = train_df["label"].to_numpy(dtype=np.int8)
     y_test = test_df["label"].to_numpy(dtype=np.int8)
