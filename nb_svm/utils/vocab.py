@@ -18,16 +18,16 @@ class NBSVMVocabulary:
 
         for text in dataframe["text"].values:
             document_tokens = tokenizer(str(text))
-            tokens.update(document_tokens)
-            bigrams.update(zip(document_tokens, document_tokens[1:]))
+            tokens.update(document_tokens)  # unigrams
+            bigrams.update(zip(document_tokens, document_tokens[1:]))  # Create bigrams from two consecutive tokens
 
         sorted_tokens = sorted(tokens)
         sorted_bigrams = sorted(bigrams)
 
-        token_to_idx = {token: idx for idx, token in enumerate(sorted_tokens)}
+        token_to_idx = {token: idx for idx, token in enumerate(sorted_tokens)}  # sorted
         idx_to_token = {idx: token for token, idx in token_to_idx.items()}
 
-        bigram_offset = len(token_to_idx)
+        bigram_offset = len(token_to_idx)  # first tokens, then bigrams
         bigram_to_idx = {
             bigram: bigram_offset + idx
             for idx, bigram in enumerate(sorted_bigrams)
