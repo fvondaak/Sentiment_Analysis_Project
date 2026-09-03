@@ -25,15 +25,6 @@ DEFAULT_MODEL_PATH = NB_SVM_DIR / "trained_models" / "nb_svm.pkl"
 DEFAULT_RESULTS_PATH = NB_SVM_DIR / "nb_svm_results.csv"
 
 
-# def binarize_features(features):
-#     """Return a binary CSR copy of a sparse feature matrix."""
-#     binary = features.tocsr(copy=True)
-#     binary.sum_duplicates()
-#     binary.eliminate_zeros()
-#     binary.data = np.ones(binary.nnz, dtype=np.int8)
-#     return binary
-
-
 def load_model(model_path):
     """Load a classifier and its NB log-count ratio."""
     with Path(model_path).open("rb") as file:
