@@ -35,8 +35,8 @@ from .utils.data import (
     IMDBDataset,
     load_data,
     create_dataloader,
-    get_length,
 )
+from .utils.training import evaluate_model, train_one_epoch
 from .utils.vocab import (
     BOS_TOKEN,
     EOS_TOKEN,
@@ -82,7 +82,7 @@ def create_embedding_vectors(vocab, embedding_dim):
 # ==========================================
 # 6. TRAINING
 # ==========================================
-def train_model(model, train_loader, val_loader, num_epochs, pad_value=0, save_path=CKPT_PATH):
+def train_model(model, train_loader, val_loader, num_epochs, save_path=CKPT_PATH):
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam([
     {
@@ -102,46 +102,24 @@ def train_model(model, train_loader, val_loader, num_epochs, pad_value=0, save_p
         "lr": 0.001,
     },
 ])  # smaller learning rate for embedding layer
-    total_step = len(train_loader)
     best_val_loss = float("inf")
 
     save_dir = os.path.dirname(save_path)
     if save_dir:
         os.makedirs(save_dir, exist_ok=True)
 
-    for epoch in range(num_epochs):
-        model.train()
-        for i, (input_ids, labels) in enumerate(train_loader):
-            lengths = get_length(input_ids, pad_value)
-            input_ids = input_ids.to(device)
-            labels = labels.to(device)
+    for epoch in range(1, num_epochs + 1):
+        train_one_epoch(
+            model,
+            train_loader,
+            criterion,
+            epoch,
+            optimizer,
+        )
+        val_loss, _ = evaluate_model(model, val_loader, criterion, epoch)
 
-            outputs, _ = model(input_ids, lengths)
-            loss = criterion(outputs.view(-1), labels.float())
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            if (i + 1) % 10 == 0:
-                print(
-                    "Epoch [{}/{}], Step [{}/{}], Train Loss: {:.8f}".format(
-                        epoch + 1, num_epochs, i + 1, total_step, loss.item()
-                    )
-                )
-
-        model.eval()
-        val_loss = 0
-        for i, (input_ids, labels) in enumerate(val_loader):
-            lengths = get_length(input_ids, pad_value)
-            input_ids = input_ids.to(device)
-            labels = labels.to(device)
-            with torch.no_grad():
-                outputs, _ = model(input_ids, lengths)
-            val_loss += criterion(outputs.view(-1), labels.float()).item()
-        epoch_val_loss = val_loss / (i + 1)
-        print("\nEpoch [{}/{}] Validation Loss: {:.4f}\n".format(epoch + 1, num_epochs, epoch_val_loss))
-
-        if epoch_val_loss < best_val_loss:
-            best_val_loss = epoch_val_loss
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
             torch.save(model.state_dict(), save_path)
             print("--> Modell verbessert und unter '{}' gespeichert.\n".format(save_path))
 
@@ -193,8 +171,13 @@ def train_and_save():
     model.to(device)
 
     print("Own-NN: Starte Training...")
-    model = train_model(model, train_loader, val_loader, num_epochs=NUM_EPOCHS,
-                         pad_value=pad_value, save_path=CKPT_PATH)
+    model = train_model(
+        model,
+        train_loader,
+        val_loader,
+        num_epochs=NUM_EPOCHS,
+        save_path=CKPT_PATH,
+    )
 
     save_vocab(vocab)
     save_meta(vocab_size, pad_value)

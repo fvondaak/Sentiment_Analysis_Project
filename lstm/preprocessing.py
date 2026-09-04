@@ -62,6 +62,6 @@ if __name__ == "__main__":
     preprocess_dataset(
         input_path=args.input_path,
         output_path=OUTPUT_PATH,
-        test_size=TEST_SIZE,
+        test_size=args.split,
         seed=args.seed,
     )
