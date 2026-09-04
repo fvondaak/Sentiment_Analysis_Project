@@ -3,13 +3,13 @@
 import pandas as pd
 import pytest
 
-from own_nn import (
+from common.tokenizer import get_tokenizer
+from lstm.utils.vocab import (
     BOS_TOKEN,
     EOS_TOKEN,
     PAD_TOKEN,
     UNK_TOKEN,
     create_vocabulary,
-    get_tokenizer,
 )
 
 

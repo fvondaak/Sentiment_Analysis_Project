@@ -6,10 +6,10 @@ from sklearn.model_selection import train_test_split
 
 from torch.utils.data import Dataset, DataLoader
 
+from .vocab import BOS_TOKEN, EOS_TOKEN
+
 DEFAULT_DATA_PATH = "imdb_sentiment_dataset.csv"
 MAX_SEQ_LEN = 200
-BOS_TOKEN = "[BOS]"
-EOS_TOKEN = "[EOS]"
 
 class IMDBDataset(Dataset):
     def __init__(self, df, tokenizer, vocab, max_seq_len=MAX_SEQ_LEN, pad_value=0):
