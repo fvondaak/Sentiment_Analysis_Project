@@ -24,14 +24,18 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+# from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 import gensim.downloader as gensim_api
+
+from .utils.model import BiLSTM, SelfAttention
+from common.tokenizer import get_tokenizer
+from .utils.data import IMDBDataset, load_data, create_dataloader, get_length
 
 # ==========================================
 # 1. KONFIGURATION
 # ==========================================
-DATA_PATH = "imdb_sentiment_dataset.csv"
+DEFAULT_DATA_PATH = "imdb_sentiment_dataset.csv"
 RESULTS_PATH = "own_nn_results.csv"
 NUM_EVAL_SAMPLES = 1000
 
@@ -53,69 +57,6 @@ BOS_TOKEN = "[BOS]"
 EOS_TOKEN = "[EOS]"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-# ==========================================
-# 2. DATEN LADEN & TOKENIZER
-# ==========================================
-def load_data(data_path=DATA_PATH, val_size=0.1, seed=42):
-    df = pd.read_csv(data_path)
-
-    full_train_df = df[df["split"] == "train"].reset_index(drop=True)
-    test_df = df[df["split"] == "test"].reset_index(drop=True)
-
-    train_df, val_df = train_test_split(
-        full_train_df,
-        test_size=val_size,
-        random_state=seed,
-        stratify=full_train_df["label"],
-    )
-    train_df = train_df.reset_index(drop=True)
-    val_df = val_df.reset_index(drop=True)
-
-    return train_df, val_df, test_df
-
-
-# Die IMDb-Reviews wurden von Webseiten gescrapt und enthalten noch echtes
-# Markup (<br />, <i>) sowie HTML-Entities (&amp;, &quot;). `\b\w+\b` schneidet
-# daraus Pseudo-Wörter heraus: "br" war so das siebthäufigste Token im
-# Vokabular. Sie tragen keine Bedeutung, belegen aber Plätze im Eingabefenster
-# (MAX_SEQ_LEN), das ohnehin schon 40% der Reviews abschneidet.
-HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
-
-# Kontraktionen zerfallen an `\b\w+\b` in Bruchstücke: "wasn't" -> ["wasn", "t"].
-# Damit verschwindet die Verneinung, und genau die entscheidet bei Sentiment
-# über das Vorzeichen ("wasn't bad" ist positiv, "bad" negativ). Nach dem
-# Auflösen steht dort "was not bad" - und "not" ist ein Wort, für das GloVe
-# einen gut trainierten Vektor hat.
-#
-# Unregelmäßige Fälle zuerst, weil die allgemeine Regel sie verstümmeln würde
-# ("won't" -> "wo not").
-IRREGULAR_CONTRACTIONS = {
-    "won't": "will not",
-    "can't": "can not",
-    "shan't": "shall not",
-    "ain't": "is not",
-}
-NT_CONTRACTION_PATTERN = re.compile(r"\b(\w+)n't\b")
-
-
-def get_tokenizer():
-    def tokenizer(text):
-        text = HTML_TAG_PATTERN.sub(" ", str(text))
-        text = html.unescape(text)
-        text = text.lower()
-
-        # Typografischen Apostroph auf ASCII normalisieren, sonst greifen die
-        # Kontraktions-Regeln bei kopierten Texten nicht.
-        text = text.replace("’", "'")
-        for contraction, expansion in IRREGULAR_CONTRACTIONS.items():
-            text = text.replace(contraction, expansion)
-        text = NT_CONTRACTION_PATTERN.sub(r"\1 not", text)
-
-        tokens = re.findall(r"\b\w+\b", text)
-        return tokens
-    return tokenizer
 
 
 # ==========================================
@@ -182,44 +123,6 @@ def load_vocab(path=VOCAB_PATH):
     return CustomVocabulary(data["token_to_idx"], data["idx_to_token"], data["unknown_token"])
 
 
-# ==========================================
-# 4. DATASET / DATALOADER
-# ==========================================
-class IMDbDataset(Dataset):
-    def __init__(self, df, tokenizer, vocab, max_seq_len=MAX_SEQ_LEN, pad_value=0):
-        super(IMDbDataset, self).__init__()
-        all_text = [t for t in df["text"].values]
-        labels = df["label"].values
-
-        self.vocab = vocab
-        self.max_seq_len = max_seq_len
-
-        proc_seq = []
-        bos_idx = vocab[BOS_TOKEN]
-        eos_idx = vocab[EOS_TOKEN]
-
-        for t in all_text:
-            tokens = tokenizer(str(t))
-            indices = [vocab[tok] for tok in tokens]
-            indices = indices[:(max_seq_len - 2)]
-            formatted_seq = [bos_idx] + indices + [eos_idx]
-            proc_seq.append(torch.tensor(formatted_seq, dtype=torch.long))
-
-        self.input_ids = torch.nn.utils.rnn.pad_sequence(
-            proc_seq, batch_first=True, padding_value=pad_value
-        )
-        self.labels = torch.tensor(labels, dtype=torch.long)
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, idx):
-        return self.input_ids[idx], self.labels[idx]
-
-
-def create_dataloader(df, tokenizer, vocab, batch_size, max_seq_len=MAX_SEQ_LEN, pad_value=0, shuffle=True):
-    dataset = IMDbDataset(df, tokenizer, vocab, max_seq_len, pad_value)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
 
 # def create_embedding_vectors(vocab, embedding_dim):
@@ -242,77 +145,6 @@ def create_embedding_vectors(vocab, embedding_dim):
         if token == PAD_TOKEN:
             vectors[idx] = torch.zeros(embedding_dim)  # Ensure PAD_TOKEN has a zero vector
     return vectors
-
-
-def get_length(x, pad_value=0):
-    length = []
-    for i in x.cpu().tolist():
-        length.append(len(i) - i.count(pad_value))
-    return length
-
-
-# ==========================================
-# 5. MODELL
-# ==========================================
-class SelfAttention(nn.Module):
-    def __init__(self, hidden_dim):
-        super().__init__()
-        self.projection = nn.Linear(hidden_dim, 1)
-
-    def forward(self, encoder_outputs):
-        energy = self.projection(encoder_outputs)
-        weights = F.softmax(energy, dim=1)
-        context = torch.sum(encoder_outputs * weights, dim=1)
-        return context, weights
-
-
-class BiLSTM(nn.Module):
-    def __init__(self, vocab_dim, embedding_dim, hidden_dim, num_layers, num_classes, pad_value=0):
-        super(BiLSTM, self).__init__()
-        self.vocab_dim = vocab_dim
-        self.embedding_dim = embedding_dim
-        self.hidden_dim = hidden_dim
-        self.num_layers = num_layers
-        self.num_classes = num_classes
-        self.pad_value = float(pad_value)
-
-        self.emb = nn.Embedding(vocab_dim, embedding_dim, padding_idx=int(pad_value))
-        self.lstm = nn.LSTM(
-            input_size=embedding_dim,
-            hidden_size=hidden_dim,
-            num_layers=num_layers,
-            batch_first=True,
-            bidirectional=True,
-        )
-        self.attention = SelfAttention(self.hidden_dim)
-        self.fc = nn.Linear(self.hidden_dim, self.num_classes)
-
-    def update_embedding(self, vectors):
-        with torch.no_grad():
-            self.emb.weight.copy_(vectors)
-        self.emb.weight.requires_grad = True  # Allow fine-tuning of embeddings during training
-
-    def dropout(self, v):
-        return F.dropout(v, p=0.5, training=self.training)
-
-    def forward(self, x, lengths):
-        x = self.emb(x)
-        x = self.dropout(x)
-
-        lengths_cpu = torch.tensor(lengths, dtype=torch.int64, device="cpu")
-        packed_x = nn.utils.rnn.pack_padded_sequence(
-            x, lengths_cpu, batch_first=True, enforce_sorted=False
-        )
-        packed_out, _ = self.lstm(packed_x)
-        out, _ = nn.utils.rnn.pad_packed_sequence(packed_out, batch_first=True)
-
-        out = out[:, :, :self.hidden_dim] + out[:, :, self.hidden_dim:]
-
-        context, attn_weights = self.attention(out)
-        outputs = self.fc(context)
-
-        return outputs, attn_weights
-
 
 # ==========================================
 # 6. TRAINING
@@ -408,7 +240,7 @@ def train_and_save():
     """Volle Trainings-Pipeline: Daten laden, Vokabular bauen, Modell
     trainieren und Modell + Vokabular + Meta-Infos speichern."""
     print("Own-NN: Lade Trainingsdaten und baue Vokabular auf...")
-    train_df, val_df, test_df = load_data(DATA_PATH)
+    train_df, val_df, test_df = load_data(DEFAULT_DATA_PATH)
     tokenizer = get_tokenizer()
 
     vocab = create_vocabulary(train_df, tokenizer)
@@ -517,7 +349,7 @@ def run_evaluation(resources=None, num_samples=NUM_EVAL_SAMPLES, save_path=RESUL
             train_and_save()
             resources = load_resources()
 
-    df = pd.read_csv(DATA_PATH)
+    df = pd.read_csv(DEFAULT_DATA_PATH)
     test_df = df[df["split"] == "test"].reset_index(drop=True).head(num_samples)
 
     preds, probs = predict_batch(test_df["text"].values, resources)
