@@ -1,5 +1,7 @@
 '''Data utilities for handling datasets and data loaders.'''
 
+from pathlib import Path
+
 import torch
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -8,7 +10,11 @@ from torch.utils.data import Dataset, DataLoader
 
 from .vocab import BOS_TOKEN, EOS_TOKEN
 
-DEFAULT_DATA_PATH = "imdb_sentiment_dataset.csv"
+DEFAULT_DATA_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "dataset_preprocessed"
+    / "imdb_sentiment_dataset.csv"
+)
 MAX_SEQ_LEN = 200
 
 class IMDBDataset(Dataset):

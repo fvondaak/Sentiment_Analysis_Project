@@ -30,7 +30,13 @@ import gensim.downloader as gensim_api
 
 from .utils.model import BiLSTM, SelfAttention
 from common.tokenizer import get_tokenizer
-from .utils.data import IMDBDataset, load_data, create_dataloader, get_length
+from .utils.data import (
+    DEFAULT_DATA_PATH,
+    IMDBDataset,
+    load_data,
+    create_dataloader,
+    get_length,
+)
 from .utils.vocab import (
     BOS_TOKEN,
     EOS_TOKEN,
@@ -45,7 +51,6 @@ from .utils.vocab import (
 # ==========================================
 # 1. KONFIGURATION
 # ==========================================
-DEFAULT_DATA_PATH = "imdb_sentiment_dataset.csv"
 RESULTS_PATH = "own_nn_results.csv"
 NUM_EVAL_SAMPLES = 1000
 
