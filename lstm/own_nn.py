@@ -124,18 +124,6 @@ def load_vocab(path=VOCAB_PATH):
 
 
 
-
-# def create_embedding_vectors(vocab, embedding_dim):
-#     model_name = f"glove-wiki-gigaword-{embedding_dim}"
-#     glove_model = gensim_api.load(model_name)
-
-#     vectors = torch.zeros(len(vocab), embedding_dim)
-#     for idx, token in enumerate(vocab.get_itos()):
-#         if token in glove_model:
-#             vectors[idx] = torch.tensor(glove_model[token])
-
-#     return vectors
-
 def create_embedding_vectors(vocab, embedding_dim):
     glove_model = gensim_api.load(f"glove-wiki-gigaword-{embedding_dim}")
     vectors = torch.randn(len(vocab), embedding_dim) * 0.01  # Random initialization instead of zeros
@@ -144,6 +132,7 @@ def create_embedding_vectors(vocab, embedding_dim):
             vectors[idx] = torch.tensor(glove_model[token])
         if token == PAD_TOKEN:
             vectors[idx] = torch.zeros(embedding_dim)  # Ensure PAD_TOKEN has a zero vector
+    return vectors
     return vectors
 
 # ==========================================
