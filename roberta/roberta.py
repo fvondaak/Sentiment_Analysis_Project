@@ -10,12 +10,15 @@ import numpy as np
 import pandas as pd
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from pathlib import Path
 
 # ==========================================
 # 1. KONFIGURATION
 # ==========================================
-DATA_PATH = "imdb_sentiment_dataset.csv"
-RESULTS_PATH = "roberta_results.csv"
+
+ROBERTA_DIR = Path(__file__).resolve().parent
+DATA_PATH = ROBERTA_DIR / "dataset_preprocessed" / "imdb_sentiment_dataset.csv"
+RESULTS_PATH = ROBERTA_DIR / "roberta_results.csv"
 NUM_EVAL_SAMPLES = 1000
 BATCH_SIZE = 16
 MAX_LENGTH = 256
