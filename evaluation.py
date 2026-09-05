@@ -17,7 +17,6 @@ RESULT_PATHS = {
 }
 ACCURACY_PLOT_PATH = PROJECT_ROOT / "model_comparison.png"
 CONFUSION_PLOT_PATH = PROJECT_ROOT / "model_confusion_matrices.png"
-REQUIRED_COLUMNS = {"text", "label", "prediction"}
 
 
 def load_results(result_paths=RESULT_PATHS):
