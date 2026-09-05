@@ -58,6 +58,12 @@ def parse_args():
         default=0.0001,
         help="Learning rate for the embedding layer.",
     )
+    parser.add_argument(
+        "--weight-decay",
+        type=float,
+        default=1e-4,
+        help="Weight decay (L2 penalty) for the optimizer.",
+    )
     return parser.parse_args()
 
 
@@ -78,13 +84,14 @@ def create_embedding_vectors(vocab, embedding_dim):
 def train_model(model, train_dataloader, val_dataloader, num_epochs, save_path, args):
     """Train the model and save the state with the lowest validation loss."""
     loss_function = nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(
+    optimizer = torch.optim.AdamW(
         [
             {"params": model.emb.parameters(), "lr": args.lr_embedding},
             {"params": model.lstm.parameters(), "lr": args.lr},
             {"params": model.attention.parameters(), "lr": args.lr},
             {"params": model.fc.parameters(), "lr": args.lr},
-        ]
+        ],
+        weight_decay=args.weight_decay,
     )
     best_val_loss = float("inf")
     save_path.parent.mkdir(parents=True, exist_ok=True)
