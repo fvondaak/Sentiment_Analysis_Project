@@ -1,18 +1,16 @@
 # Sentiment Analysis Project
 
-This repository contains a comparative study of three approaches to binary
-sentiment classification on the IMDb movie review dataset. Each model predicts
-whether a review expresses negative (`0`) or positive (`1`) sentiment.
+This repositopry contains the three models used for a comparative study of three approaches to binary sentiment classification of movie reviews.
+The models predict weather a review expresses negative or positive sentiment.
 
-The project compares a traditional machine-learning baseline, a recurrent
-neural network, and a pretrained transformer model:
+The project compares a Support-Vector Machine with a Naive-Bayes layer, a Long short-term memory recurrent neural network, and a finetuned transformer (pretrained from Huggingface).
 
-- Naive Bayes Support Vector Machine (NB-SVM)
-- Bidirectional Long Short-Term Memory network (BiLSTM)
-- RoBERTa
+- Support Vector Machine with a Naive-Bayes feature weighting layer (NB-SVM)
+- Bidirectional Long Short-Term Memory with a self-attetion layer (BiLSTM)
+- RoBERTa, finetuned on the IMDB Dataset, a transformer
 
 ## Dataset
-The labeled part of the Stanford imdb Dataset for Sentiment Analysis from Huggingface is used with it's predetermined split.    
+The labeled part of the Stanford IMDB Dataset for Sentiment Analysis from Huggingface is used with it's predetermined split.    
 For more information here: https://huggingface.co/datasets/stanfordnlp/imdb
 ## Repository structure
 
