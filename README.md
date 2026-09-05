@@ -3,11 +3,9 @@
 This repositopry contains the three models used for a comparative study of three approaches to binary sentiment classification of movie reviews.
 The models predict weather a review expresses negative or positive sentiment.
 
-The project compares a Support-Vector Machine with a Naive-Bayes layer, a Long short-term memory recurrent neural network, and a finetuned transformer (pretrained from Huggingface).
-
 - Support Vector Machine with a Naive-Bayes feature weighting layer (NB-SVM)
 - Bidirectional Long Short-Term Memory with a self-attetion layer (BiLSTM)
-- RoBERTa, finetuned on the IMDB Dataset, a transformer
+- RoBERTa, a pretrained transformer finetuned on the IMDB dataset, imported from Huggingface
 
 ## Dataset
 The labeled part of the Stanford IMDB Dataset for Sentiment Analysis from Huggingface is used with it's predetermined split.    
