@@ -15,11 +15,10 @@ from pathlib import Path
 # ==========================================
 # 1. KONFIGURATION
 # ==========================================
-
+REPO_DIR = Path(__file__).resolve().parent.parent
 ROBERTA_DIR = Path(__file__).resolve().parent
-DATA_PATH = ROBERTA_DIR / "dataset_preprocessed" / "imdb_sentiment_dataset.csv"
+DATA_PATH = REPO_DIR / "dataset" / "test.csv"
 RESULTS_PATH = ROBERTA_DIR / "roberta_results.csv"
-NUM_EVAL_SAMPLES = 1000
 BATCH_SIZE = 16
 MAX_LENGTH = 256
 
@@ -34,7 +33,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # ==========================================
 def load_resources(model_name=MODEL_NAME):
     """Lädt Tokenizer und Modell einmalig."""
-    print(f"Lade Tokenizer und RoBERTa-Modell ({model_name})...")
+    print(f"Loading Tokenizer and model ({model_name})...")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
     model.eval()
@@ -96,17 +95,15 @@ def predict_batch(texts, resources):
 # ==========================================
 # 4. AUSWERTUNG AUF DEM TESTSET
 # ==========================================
-def run_evaluation(resources=None, num_samples=NUM_EVAL_SAMPLES, save_path=RESULTS_PATH):
-    """Wertet RoBERTa auf `num_samples` Beispielen aus dem Test-Split aus und
-    speichert das Ergebnis als CSV."""
+def run_evaluation(resources=None, save_path=RESULTS_PATH):
+    """Evaluate RoBERTa on the complete test split and save the results."""
     if resources is None:
         resources = load_resources()
 
-    print(f"Lade Daten aus {DATA_PATH}...")
-    df = pd.read_csv(DATA_PATH)
-    test_df = df[df["split"] == "test"].reset_index(drop=True).head(num_samples)
+    print(f"Loading data from {DATA_PATH}...")
+    test_df = pd.read_csv(DATA_PATH)
 
-    print(f"Starte RoBERTa-Auswertung auf {len(test_df)} Datensätzen...")
+    print(f"Starting RoBERTa evaluation on {len(test_df)} samples...")
     preds, probs = predict_batch(test_df["text"].values, resources)
 
     result_df = pd.DataFrame({
@@ -118,7 +115,7 @@ def run_evaluation(resources=None, num_samples=NUM_EVAL_SAMPLES, save_path=RESUL
     result_df["correct"] = (result_df["label"] == result_df["prediction"]).astype(int)
 
     result_df.to_csv(save_path, index=False)
-    print(f"RoBERTa: Ergebnisse für {len(result_df)} Beispiele gespeichert unter '{save_path}'.")
+    print(f"RoBERTa: Results for {len(result_df)} examples saved to '{save_path}'.")
     return result_df
 
 

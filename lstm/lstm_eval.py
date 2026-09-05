@@ -8,7 +8,13 @@ import torch
 import torch.nn as nn
 
 from common.tokenizer import get_tokenizer
-from .utils.data import DEFAULT_DATA_PATH, create_dataloader, get_length, load_data
+from .utils.data import (
+    DEFAULT_TEST_DATA_PATH,
+    DEFAULT_TRAIN_DATA_PATH,
+    create_dataloader,
+    get_length,
+    load_data,
+)
 from .utils.model import BiLSTM
 from .utils.vocab import PAD_TOKEN, load_vocab
 
@@ -80,7 +86,10 @@ if __name__ == "__main__":
     vocab = load_vocab(VOCAB_PATH)
     pad_value = vocab[PAD_TOKEN]
     tokenizer = get_tokenizer()
-    _, _, test_df = load_data(DEFAULT_DATA_PATH)
+    _, _, test_df = load_data(
+        DEFAULT_TRAIN_DATA_PATH,
+        DEFAULT_TEST_DATA_PATH,
+    )
 
     test_dataloader = create_dataloader(
         test_df,
@@ -125,4 +134,3 @@ if __name__ == "__main__":
     print(f"Test accuracy: {accuracy:.4f}")
     print(f"Average test loss: {average_loss:.4f}")
     print(f"Saved {len(results)} predictions to '{RESULTS_PATH}'.")
-

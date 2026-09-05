@@ -15,7 +15,7 @@ from sklearn.metrics import accuracy_score
 REPO_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_DIR))
 
-from nb_svm.utils.preprocessing import load_dataset, split_dataset
+from nb_svm.utils.preprocessing import load_dataset
 from nb_svm.nb_svm_train import binarize_features
 
 
@@ -37,20 +37,15 @@ def load_model(model_path):
     return model["classifier"], np.asarray(model["log_count_ratio"])
 
 
-def load_test_dataframe(data_dir, y_test):  # Forgot about the csv, is a bit weird
-    """Reconstruct the test dataframe from the metadata."""
+def load_test_dataframe(data_dir, y_test):
+    """Load the official test dataframe recorded during preprocessing."""
     data_dir = Path(data_dir)
     with (data_dir / "metadata.json").open(encoding="utf-8") as file:
         metadata = json.load(file)
 
-    dataframe = load_dataset(metadata["source_path"])
-    _, test_df = split_dataset(
-        dataframe,
-        test_size=metadata["test_size"],
-        seed=metadata["seed"],
-    )
+    test_df = load_dataset(metadata["test_source_path"])
     if not np.array_equal(test_df["label"].to_numpy(), y_test):
-        raise ValueError("Reconstructed test labels do not match y_test.npy.")
+        raise ValueError("Official test labels do not match y_test.npy.")
     return test_df
 
 

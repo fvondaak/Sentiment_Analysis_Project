@@ -11,7 +11,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix, save_npz
-from sklearn.model_selection import train_test_split
 
 REPO_DIR = Path(__file__).resolve().parents[2]
 if str(REPO_DIR) not in sys.path:
@@ -21,46 +20,28 @@ from common.tokenizer import get_tokenizer
 from nb_svm.utils.vocab import NBSVMVocabulary
 
 
-DEFAULT_INPUT_PATH = REPO_DIR / "common_dataset" / "IMDB_Dataset.csv"
+DEFAULT_TRAIN_INPUT_PATH = REPO_DIR / "dataset" / "train.csv"
+DEFAULT_TEST_INPUT_PATH = REPO_DIR / "dataset" / "test.csv"
 DEFAULT_OUTPUT_DIR = REPO_DIR / "nb_svm" / "data_preprocessed"
-LABEL_MAP = {"negative": 0, "positive": 1}
 
 
 def load_dataset(input_path):
-    """Load and validate the raw IMDb dataset."""
+    """Load and validate an official IMDb dataset split."""
     dataframe = pd.read_csv(input_path)
-    required_columns = {"review", "sentiment"}
+    required_columns = {"text", "label"}
     missing_columns = required_columns.difference(dataframe.columns)
 
     if missing_columns:
         missing = ", ".join(sorted(missing_columns))
         raise ValueError(f"Missing required column(s): {missing}")
-    if dataframe[["review", "sentiment"]].isna().any().any():
-        raise ValueError("The dataset contains missing reviews or labels.")
+    if dataframe[["text", "label"]].isna().any().any():
+        raise ValueError("The dataset contains missing texts or labels.")
+    if not dataframe["label"].isin([0, 1]).all():
+        raise ValueError("Labels must contain only 0 and 1.")
 
-    labels = dataframe["sentiment"].astype(str).str.strip().str.lower()
-    unsupported_labels = sorted(set(labels).difference(LABEL_MAP))
-    if unsupported_labels:
-        raise ValueError(f"Unsupported sentiment label(s): {unsupported_labels}")
-
-    return pd.DataFrame(
-        {
-            "text": dataframe["review"].astype(str),  # all reviews as strings
-            "label": labels.map(LABEL_MAP).astype(np.int8),  # 1 corresponds to positive, 0 to negative
-        }
-    )
-
-
-def split_dataset(dataframe, test_size=0.5, seed=42):
-    """Create a deterministic stratified train/test split."""
-    train_df, test_df = train_test_split(
-        dataframe,
-        test_size=test_size,
-        random_state=seed,
-        shuffle=True,
-        stratify=dataframe["label"],
-    )
-    return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
+    dataframe["text"] = dataframe["text"].astype(str)
+    dataframe["label"] = dataframe["label"].astype(np.int8)
+    return dataframe.reset_index(drop=True)
 
 
 def transform_texts(texts, vocabulary, tokenizer):
@@ -117,12 +98,13 @@ def save_preprocessed_data(
         json.dump(metadata, file, indent=2)
 
 
-def preprocess(input_path, output_dir, test_size=0.5, seed=42):
+def preprocess(train_input_path, test_input_path, output_dir):
     """Run the complete NB-SVM preprocessing pipeline."""
-    input_path = Path(input_path)
+    train_input_path = Path(train_input_path)
+    test_input_path = Path(test_input_path)
     output_dir = Path(output_dir)
-    dataframe = load_dataset(input_path)
-    train_df, test_df = split_dataset(dataframe, test_size, seed)  # 50/50 train/test split (by default)
+    train_df = load_dataset(train_input_path)
+    test_df = load_dataset(test_input_path)
     tokenizer = get_tokenizer()
     vocabulary = NBSVMVocabulary.from_dataframe(train_df, tokenizer)  # Build vocab from training data only
 
@@ -132,11 +114,9 @@ def preprocess(input_path, output_dir, test_size=0.5, seed=42):
     y_test = test_df["label"].to_numpy(dtype=np.int8)
 
     metadata = {
-        "source_path": str(input_path.resolve()),
-        "split_method": "deterministic stratified random split",
-        "official_split_available": False,
-        "seed": seed,
-        "test_size": test_size,
+        "train_source_path": str(train_input_path.resolve()),
+        "test_source_path": str(test_input_path.resolve()),
+        "split_method": "official IMDb train/test split",
         "train_samples": len(train_df),
         "test_samples": len(test_df),
         "unigram_features": len(vocabulary.token_to_idx),
@@ -159,11 +139,18 @@ def preprocess(input_path, output_dir, test_size=0.5, seed=42):
 
 if __name__ == "__main__":
     args = argparse.ArgumentParser(description=__doc__)
-    args.add_argument("--input", type=Path, default=DEFAULT_INPUT_PATH)
+    args.add_argument(
+        "--train-input",
+        type=Path,
+        default=DEFAULT_TRAIN_INPUT_PATH,
+    )
+    args.add_argument(
+        "--test-input",
+        type=Path,
+        default=DEFAULT_TEST_INPUT_PATH,
+    )
     args.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
-    args.add_argument("--test-size", type=float, default=0.5)
-    args.add_argument("--seed", type=int, default=42)
     args = args.parse_args()
 
-    metadata = preprocess(args.input, args.output_dir, args.test_size, args.seed)
+    metadata = preprocess(args.train_input, args.test_input, args.output_dir)
     print(json.dumps(metadata, indent=2))

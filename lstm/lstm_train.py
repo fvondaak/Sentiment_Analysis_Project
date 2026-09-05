@@ -9,7 +9,12 @@ import torch
 import torch.nn as nn
 
 from common.tokenizer import get_tokenizer
-from .utils.data import DEFAULT_DATA_PATH, create_dataloader, load_data
+from .utils.data import (
+    DEFAULT_TEST_DATA_PATH,
+    DEFAULT_TRAIN_DATA_PATH,
+    create_dataloader,
+    load_data,
+)
 from .utils.model import BiLSTM
 from .utils.training import evaluate_model, train_one_epoch
 from .utils.vocab import PAD_TOKEN, create_vocabulary, load_vocab, save_vocab
@@ -152,7 +157,10 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    train_df, val_df, _ = load_data(DEFAULT_DATA_PATH)
+    train_df, val_df, _ = load_data(
+        DEFAULT_TRAIN_DATA_PATH,
+        DEFAULT_TEST_DATA_PATH,
+    )
     tokenizer = get_tokenizer()
 
     if args.use_existing_vocab:
