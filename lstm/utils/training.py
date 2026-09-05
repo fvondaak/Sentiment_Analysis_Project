@@ -33,6 +33,7 @@ def train_one_epoch(
 
     average_loss = total_loss / len(train_dataloader)
     print(f"Epoch {epoch} - Average training loss: {average_loss:.4f}")
+    return average_loss
 
 
 def evaluate_model(model, val_dataloader, loss_function, epoch):

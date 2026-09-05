@@ -1,6 +1,7 @@
 """Train a fresh BiLSTM sentiment model."""
 
 import argparse
+import csv
 from pathlib import Path
 
 import gensim.downloader as gensim_api
@@ -17,6 +18,7 @@ from .utils.vocab import PAD_TOKEN, create_vocabulary, load_vocab, save_vocab
 LSTM_DIR = Path(__file__).resolve().parent
 VOCAB_PATH = LSTM_DIR / "own_nn_artifacts" / "vocab.pkl"
 MODEL_PATH = LSTM_DIR / "trained_models" / "BiLSTM.pt"
+TRAINING_LOG_PATH = LSTM_DIR / "training_history.csv"
 
 BATCH_SIZE = 64
 EMBEDDING_DIM = 100
@@ -81,7 +83,15 @@ def create_embedding_vectors(vocab, embedding_dim):
     return vectors
 
 
-def train_model(model, train_dataloader, val_dataloader, num_epochs, save_path, args):
+def train_model(
+    model,
+    train_dataloader,
+    val_dataloader,
+    num_epochs,
+    save_path,
+    log_path,
+    args,
+):
     """Train the model and save the state with the lowest validation loss."""
     loss_function = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.AdamW(
@@ -95,26 +105,46 @@ def train_model(model, train_dataloader, val_dataloader, num_epochs, save_path, 
     )
     best_val_loss = float("inf")
     save_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    for epoch in range(1, num_epochs + 1):
-        train_one_epoch(
-            model,
-            train_dataloader,
-            loss_function,
-            epoch,
-            optimizer,
+    with log_path.open("w", newline="", encoding="utf-8") as log_file:
+        writer = csv.DictWriter(
+            log_file,
+            fieldnames=["epoch", "train_loss", "val_loss", "val_accuracy"],
         )
-        val_loss, _ = evaluate_model(
-            model,
-            val_dataloader,
-            loss_function,
-            epoch,
-        )
+        writer.writeheader()
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            torch.save(model.state_dict(), save_path)
-            print(f"Saved improved model to '{save_path}'.")
+        for epoch in range(1, num_epochs + 1):
+            train_loss = train_one_epoch(
+                model,
+                train_dataloader,
+                loss_function,
+                epoch,
+                optimizer,
+            )
+            val_loss, val_accuracy = evaluate_model(
+                model,
+                val_dataloader,
+                loss_function,
+                epoch,
+            )
+
+            writer.writerow(
+                {
+                    "epoch": epoch,
+                    "train_loss": train_loss,
+                    "val_loss": val_loss,
+                    "val_accuracy": val_accuracy,
+                }
+            )
+            log_file.flush()
+
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                torch.save(model.state_dict(), save_path)
+                print(f"Saved improved model to '{save_path}'.")
+
+    print(f"Training history saved to '{log_path}'.")
 
 
 if __name__ == "__main__":
@@ -177,6 +207,7 @@ if __name__ == "__main__":
         val_dataloader,
         args.epochs,
         MODEL_PATH,
-        args
+        TRAINING_LOG_PATH,
+        args,
     )
     print(f"Training complete. Best model exported to '{MODEL_PATH}'.")
