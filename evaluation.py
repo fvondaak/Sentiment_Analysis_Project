@@ -31,7 +31,6 @@ def load_results(result_paths=RESULT_PATHS):
             )
 
         dataframe = pd.read_csv(result_path)
-        missing_columns = REQUIRED_COLUMNS.difference(dataframe.columns)
         if dataframe.empty:
             raise ValueError(f"Results for {model_name} are empty.")
 
