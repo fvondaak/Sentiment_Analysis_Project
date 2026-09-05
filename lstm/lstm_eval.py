@@ -14,7 +14,7 @@ from .utils.vocab import PAD_TOKEN, load_vocab
 
 
 LSTM_DIR = Path(__file__).resolve().parent
-VOCAB_PATH = LSTM_DIR / "own_nn_artifacts" / "vocab.pkl"
+VOCAB_PATH = LSTM_DIR / "vocab" / "vocab.pkl"
 MODEL_PATH = LSTM_DIR / "trained_models" / "BiLSTM.pt"
 RESULTS_PATH = LSTM_DIR / "lstm_results.csv"
 
