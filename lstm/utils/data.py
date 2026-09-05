@@ -10,12 +10,10 @@ from torch.utils.data import Dataset, DataLoader
 
 from .vocab import BOS_TOKEN, EOS_TOKEN
 
-DEFAULT_DATA_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "dataset_preprocessed"
-    / "imdb_sentiment_dataset.csv"
-)
-MAX_SEQ_LEN = 200
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_TRAIN_DATA_PATH = PROJECT_ROOT / "dataset" / "train.csv"
+DEFAULT_TEST_DATA_PATH = PROJECT_ROOT / "dataset" / "test.csv"
+MAX_SEQ_LEN = 400
 
 class IMDBDataset(Dataset):
     def __init__(self, df, tokenizer, vocab, max_seq_len=MAX_SEQ_LEN, pad_value=0):
@@ -49,11 +47,14 @@ class IMDBDataset(Dataset):
         return self.input_ids[idx], self.labels[idx]
 
 
-def load_data(data_path=DEFAULT_DATA_PATH, val_size=0.1, seed=42):
-    df = pd.read_csv(data_path)
-
-    full_train_df = df[df["split"] == "train"].reset_index(drop=True)
-    test_df = df[df["split"] == "test"].reset_index(drop=True)
+def load_data(
+    train_data_path=DEFAULT_TRAIN_DATA_PATH,
+    test_data_path=DEFAULT_TEST_DATA_PATH,
+    val_size=0.1,
+    seed=42,
+):
+    full_train_df = pd.read_csv(train_data_path)
+    test_df = pd.read_csv(test_data_path).reset_index(drop=True)
 
     train_df, val_df = train_test_split(
         full_train_df,

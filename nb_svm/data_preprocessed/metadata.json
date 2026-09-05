@@ -1,0 +1,14 @@
+{
+  "train_source_path": "/home/fvdaa/projects/SentimentAnalysis/dataset/train.csv",
+  "test_source_path": "/home/fvdaa/projects/SentimentAnalysis/dataset/test.csv",
+  "split_method": "official IMDb train/test split",
+  "train_samples": 25000,
+  "test_samples": 25000,
+  "unigram_features": 74869,
+  "bigram_features": 1381134,
+  "total_features": 1456003,
+  "labels": {
+    "negative": 0,
+    "positive": 1
+  }
+}

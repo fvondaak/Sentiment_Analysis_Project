@@ -5,14 +5,11 @@
 
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 from scipy.sparse import load_npz
-from sklearn.metrics import accuracy_score
 from sklearn.svm import LinearSVC
 
 import pickle
@@ -20,11 +17,7 @@ import pickle
 REPO_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_DIR))
 
-from nb_svm.utils.preprocessing import load_dataset, split_dataset
-
-
 DEFAULT_DATA_DIR = Path(__file__).resolve().parent / "data_preprocessed"
-DEFAULT_RESULTS_PATH = Path(__file__).resolve().parent / "nb_svm_results.csv"
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent / "trained_models" / "nb_svm.pkl"
 
 

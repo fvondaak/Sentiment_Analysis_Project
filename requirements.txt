@@ -1,0 +1,11 @@
+datasets
+gensim
+matplotlib
+numpy
+pandas
+pytest
+scikit-learn
+scipy
+seaborn
+torch
+transformers
