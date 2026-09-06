@@ -1,14 +1,14 @@
 # Sentiment Analysis Project
 
-This repositopry contains the three models used for a comparative study of three approaches to binary sentiment classification of movie reviews.
-The models predict weather a review expresses negative or positive sentiment.
+This repository contains the three models used for a comparative study of three approaches to binary sentiment classification of movie reviews.
+The models predict whether a review expresses negative or positive sentiment.
 
 - Support Vector Machine with a Naive-Bayes feature weighting layer (NB-SVM)
-- Bidirectional Long Short-Term Memory with a self-attetion layer (BiLSTM)
+- Bidirectional Long Short-Term Memory with a self-attention layer (BiLSTM)
 - RoBERTa, a pretrained transformer finetuned on the IMDB dataset, imported from Huggingface
 
 ## Dataset
-The labeled part of the Stanford IMDB Dataset for Sentiment Analysis from Huggingface is used with it's predetermined split.    
+The labeled part of the Stanford IMDB Dataset for Sentiment Analysis from Huggingface is used with its predetermined split.    
 For more information here: https://huggingface.co/datasets/stanfordnlp/imdb
 ## Repository structure
 
@@ -48,10 +48,10 @@ Linear classifier (linear SVM) with weighted features using Naive Bayes log-coun
 
 ### BiLSTM
 
-The BiLSTM model with self-attention layer based on the lab excersise with some improvements:
+The BiLSTM model with self-attention layer based on the lab exercise with some improvements:
 - Improved tokenizer
-- Trainable embedding layer initialized with GloVe vectors for tokens for available tokens
-- AdamW optimizer with L2 Regulariztation to improve generalizaion ability (with limited success)
+- Trainable embedding layer initialized with GloVe vectors for available tokens
+- AdamW optimizer with L2 regularization to improve generalization ability (with limited success)
 
 ### RoBERTa
 
@@ -70,7 +70,7 @@ of 25,000 reviews.
 | BiLSTM | 90.43% | LR=1e-3 (1e-4 for embedding), L2= 1e-4, epochs=15|
 | RoBERTa | 91.44% | None |
 
-Interpretation: The LSTM with self-attention layer fails to surpass the NB-SVM model while requiring considerably more time/resources to train. The transformer-based model surpasses the NB-SVM by a couple of percentage points while much more complex and not viable to train without access to a GPU.In conclusion, a surprisingly good performance by the relatively simple NB-SVM. For a more detailed analysis, read the report.
+Interpretation: The LSTM with self-attention layer fails to surpass the NB-SVM model while requiring considerably more time/resources to train. The transformer-based model surpasses the NB-SVM by a couple of percentage points while being much more complex and not viable to train without access to a GPU. In conclusion, a surprisingly good performance by the relatively simple NB-SVM. For a more detailed analysis, read the report.
 
 ## Environment setup
 
@@ -94,7 +94,7 @@ This creates `dataset/train.csv` and `dataset/test.csv`.
 
 ## Running the models
 
-Run all commands from  project root with the venv activated.
+Run all commands from the project root with the venv activated.
 
 ### NB-SVM
 
@@ -115,7 +115,7 @@ python -m nb_svm.nb_svm_eval
 ```bash
 # Train BiLSTM
 python -m lstm.lstm_train --epochs <number of epochs>
-# Evaluate BiLSTM on test set and write predicitons into a csv  
+# Evaluate BiLSTM on test set and write predictions into a csv
 python -m lstm.lstm_eval
 # Plot training history
 python -m lstm.plot
@@ -140,11 +140,12 @@ This creates:
 
 - `model_comparison.png`: bar chart of model test accuracies
 - `model_confusion_matrices.png`: confusion matrices for all three models
-- `accuracy_by_review_length.png`: accuracy by review lenght
+- `accuracy_by_review_length.png`: accuracy by review length
+
 ## Unit tests
 
-In the development of the BiLSTM and NB SVM, unit tests for the vocab and the tokenizer were created to ensure requirements are met.
-To run them, run the follownig commands:
+In the development of the BiLSTM and NB-SVM, unit tests for the vocab and the tokenizer were created to ensure requirements are met.
+To run them, run the following commands:
 
 ```bash
 # Tokenizer test
