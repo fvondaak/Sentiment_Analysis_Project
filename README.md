@@ -55,7 +55,8 @@ The BiLSTM model with self-attention layer based on the lab excersise with some 
 
 ### RoBERTa
 
-Pretrained RoBERTa model finetuned on HF IMDB Dataset. Still to be changed
+Pretrained RoBERTa finetuned on IMDB dataset, from Huggingface:  
+More here: https://huggingface.co/textattack/roberta-base-imdb
 
 
 ## Experimental results
@@ -65,11 +66,11 @@ of 25,000 reviews.
 
 | Model | Test accuracy | Training Parameters |
 | --- | ---: | --- |
-| NB-SVM | 90.84% | C=1, $\alpha$=1  |
+| NB-SVM | 90.94% | C=0.05, $\alpha$=0.1  |
 | BiLSTM | 90.43% | LR=1e-3 (1e-4 for embedding), L2= 1e-4, epochs=15|
-| RoBERTa | TODO | None |
+| RoBERTa | 91.44% | None |
 
-Interpretation: The LSTM with self-attention layer fails to surpass the NB-SVM model while requiring considerably more time/resources to train. The transformer-based model surpasses the NB-SVM by a couple of percentage points while much more complex and not viable to train without access to an HPC cluster.In conclusion, a surprisingly good performance by the relatively simple NB-SVM.
+Interpretation: The LSTM with self-attention layer fails to surpass the NB-SVM model while requiring considerably more time/resources to train. The transformer-based model surpasses the NB-SVM by a couple of percentage points while much more complex and not viable to train without access to a GPU.In conclusion, a surprisingly good performance by the relatively simple NB-SVM. For a more detailed analysis, read the report.
 
 ## Environment setup
 
