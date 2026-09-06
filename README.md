@@ -140,7 +140,7 @@ This creates:
 
 - `model_comparison.png`: bar chart of model test accuracies
 - `model_confusion_matrices.png`: confusion matrices for all three models
-
+- `accuracy_by_review_length.png`: accuracy by review lenght
 ## Unit tests
 
 In the development of the BiLSTM and NB SVM, unit tests for the vocab and the tokenizer were created to ensure requirements are met.
