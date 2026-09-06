@@ -20,10 +20,10 @@ ROBERTA_DIR = Path(__file__).resolve().parent
 DATA_PATH = REPO_DIR / "dataset" / "test.csv"
 RESULTS_PATH = ROBERTA_DIR / "roberta_results.csv"
 BATCH_SIZE = 16
-MAX_LENGTH = 256
+MAX_LENGTH = 128  #  pretrained roberta was trained with this max_leght
 
 # Falls du ein lokal feingetuntes Modell hast, trage hier den Ordnerpfad ein.
-MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+MODEL_NAME = "textattack/roberta-base-imdb"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
