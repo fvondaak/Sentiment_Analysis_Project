@@ -1,7 +1,6 @@
 # Script to evaluate nb_svm model
 
 import argparse
-import json
 import pickle
 from pathlib import Path
 import sys
@@ -38,12 +37,9 @@ def load_model(model_path):
 
 
 def load_test_dataframe(data_dir, y_test):
-    """Load the official test dataframe recorded during preprocessing."""
+    """Load the test dataframe recorded during preprocessing."""
     data_dir = Path(data_dir)
-    with (data_dir / "metadata.json").open(encoding="utf-8") as file:
-        metadata = json.load(file)
-
-    test_df = load_dataset(metadata["test_source_path"])
+    test_df = load_dataset(data_dir / "test.csv")
     if not np.array_equal(test_df["label"].to_numpy(), y_test):
         raise ValueError("Official test labels do not match y_test.npy.")
     return test_df

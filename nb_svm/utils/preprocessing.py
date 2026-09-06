@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix, save_npz
+from sklearn.model_selection import train_test_split
 
 REPO_DIR = Path(__file__).resolve().parents[2]
 if str(REPO_DIR) not in sys.path:
@@ -79,18 +80,28 @@ def transform_texts(texts, vocabulary, tokenizer):
 def save_preprocessed_data(
     output_dir,
     X_train,
+    X_val,
     X_test,
     y_train,
+    y_val,
     y_test,
+    train_df,
+    val_df,
+    test_df,
     vocabulary,
     metadata,
 ):
     """Save matrices, labels, vocabulary, and metadata."""
     output_dir.mkdir(parents=True, exist_ok=True)
     save_npz(output_dir / "X_train.npz", X_train)
+    save_npz(output_dir / "X_val.npz", X_val)
     save_npz(output_dir / "X_test.npz", X_test)
     np.save(output_dir / "y_train.npy", y_train)
+    np.save(output_dir / "y_val.npy", y_val)
     np.save(output_dir / "y_test.npy", y_test)
+    train_df.to_csv(output_dir / "train.csv", index=False)
+    val_df.to_csv(output_dir / "validation.csv", index=False)
+    test_df.to_csv(output_dir / "test.csv", index=False)
 
     with (output_dir / "vocabulary.pkl").open("wb") as file:
         pickle.dump(vocabulary, file)
@@ -98,26 +109,47 @@ def save_preprocessed_data(
         json.dump(metadata, file, indent=2)
 
 
-def preprocess(train_input_path, test_input_path, output_dir):
+def preprocess(train_input_path, test_input_path, output_dir, seed=42):
     """Run the complete NB-SVM preprocessing pipeline."""
     train_input_path = Path(train_input_path)
     test_input_path = Path(test_input_path)
     output_dir = Path(output_dir)
-    train_df = load_dataset(train_input_path)
-    test_df = load_dataset(test_input_path)
+    full_df = pd.concat(
+        [load_dataset(train_input_path), load_dataset(test_input_path)],
+        ignore_index=True,
+    )
+    train_df, remainder_df = train_test_split(
+        full_df,
+        test_size=27500,
+        random_state=seed,
+        stratify=full_df["label"],
+    )
+    val_df, test_df = train_test_split(
+        remainder_df,
+        test_size=25000,
+        random_state=seed,
+        stratify=remainder_df["label"],
+    )
+    train_df = train_df.reset_index(drop=True)
+    val_df = val_df.reset_index(drop=True)
+    test_df = test_df.reset_index(drop=True)
     tokenizer = get_tokenizer()
     vocabulary = NBSVMVocabulary.from_dataframe(train_df, tokenizer)  # Build vocab from training data only
 
     X_train = transform_texts(train_df["text"], vocabulary, tokenizer)  # Transform texts into sparse matrices
+    X_val = transform_texts(val_df["text"], vocabulary, tokenizer)
     X_test = transform_texts(test_df["text"], vocabulary, tokenizer)
     y_train = train_df["label"].to_numpy(dtype=np.int8)
+    y_val = val_df["label"].to_numpy(dtype=np.int8)
     y_test = test_df["label"].to_numpy(dtype=np.int8)
 
     metadata = {
         "train_source_path": str(train_input_path.resolve()),
         "test_source_path": str(test_input_path.resolve()),
-        "split_method": "official IMDb train/test split",
+        "split_method": "stratified 45% train, 5% validation, 50% test split",
+        "seed": seed,
         "train_samples": len(train_df),
+        "validation_samples": len(val_df),
         "test_samples": len(test_df),
         "unigram_features": len(vocabulary.token_to_idx),
         "bigram_features": len(vocabulary.bigram_to_idx),
@@ -128,9 +160,14 @@ def preprocess(train_input_path, test_input_path, output_dir):
     save_preprocessed_data(
         output_dir,
         X_train,
+        X_val,
         X_test,
         y_train,
+        y_val,
         y_test,
+        train_df,
+        val_df,
+        test_df,
         vocabulary,
         metadata,
     )
@@ -150,7 +187,8 @@ if __name__ == "__main__":
         default=DEFAULT_TEST_INPUT_PATH,
     )
     args.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    args.add_argument("--seed", type=int, default=42)
     args = args.parse_args()
 
-    metadata = preprocess(args.train_input, args.test_input, args.output_dir)
+    metadata = preprocess(args.train_input, args.test_input, args.output_dir, args.seed)
     print(json.dumps(metadata, indent=2))

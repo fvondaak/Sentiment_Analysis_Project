@@ -1,12 +1,14 @@
 {
-  "train_source_path": "/home/fvdaa/projects/SentimentAnalysis/dataset/train.csv",
-  "test_source_path": "/home/fvdaa/projects/SentimentAnalysis/dataset/test.csv",
-  "split_method": "official IMDb train/test split",
-  "train_samples": 25000,
+  "train_source_path": "/home/gabriel-cabrera/Desktop/Sentiment_Analysis_Project/dataset/train.csv",
+  "test_source_path": "/home/gabriel-cabrera/Desktop/Sentiment_Analysis_Project/dataset/test.csv",
+  "split_method": "stratified 45% train, 5% validation, 50% test split",
+  "seed": 42,
+  "train_samples": 22500,
+  "validation_samples": 2500,
   "test_samples": 25000,
-  "unigram_features": 74869,
-  "bigram_features": 1381134,
-  "total_features": 1456003,
+  "unigram_features": 73325,
+  "bigram_features": 1278680,
+  "total_features": 1352005,
   "labels": {
     "negative": 0,
     "positive": 1
